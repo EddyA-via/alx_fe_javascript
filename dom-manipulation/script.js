@@ -1,36 +1,47 @@
-// Quotes array
+// Initialize quote array
 const quotes = [
   { text: "Stay hungry, stay foolish.", category: "Motivation" },
   { text: "Be yourself; everyone else is already taken.", category: "Life" }
 ];
 
-// Show quote
+// Function to show a random quote
 function showRandomQuote() {
   const quoteDisplay = document.getElementById("quoteDisplay");
-  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-  quoteDisplay.textContent = `"${randomQuote.text}" — (${randomQuote.category})`;
+  if (quotes.length === 0) {
+    quoteDisplay.textContent = "No quotes available.";
+    return;
+  }
+
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  const quote = quotes[randomIndex];
+  quoteDisplay.textContent = `"${quote.text}" — (${quote.category})`;
 }
 
-// Add new quote
+// Function to add a new quote
 function addQuote() {
   const textInput = document.getElementById("newQuoteText");
   const categoryInput = document.getElementById("newQuoteCategory");
+
   const text = textInput.value.trim();
   const category = categoryInput.value.trim();
 
   if (text && category) {
     quotes.push({ text, category });
+
+    // Clear input fields
     textInput.value = "";
     categoryInput.value = "";
+
+    // Update the displayed quote
     showRandomQuote();
   } else {
-    alert("Please enter both quote and category.");
+    alert("Please enter both quote text and category.");
   }
 }
 
-// Attach event listeners
+// Event listeners
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 document.getElementById("addQuoteButton").addEventListener("click", addQuote);
 
-// Show one on load
+// Display one quote on load
 showRandomQuote();
