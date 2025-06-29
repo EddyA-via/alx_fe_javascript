@@ -8,7 +8,7 @@ const categoryFilter = document.getElementById('categoryFilter');
 const exportBtn = document.getElementById('exportBtn');
 const importInput = document.getElementById('importInput');
 
-function displayRandomQuote() {
+function showRandomQuote() {
   const filteredQuotes = selectedCategory === 'All' 
     ? quotes 
     : quotes.filter(q => q.category === selectedCategory);
@@ -32,7 +32,7 @@ function addQuote() {
   quotes.push(newQuote);
   saveQuotesToLocalStorage();
   updateCategoryOptions();
-  displayRandomQuote();
+  showRandomQuote();
   postQuoteToServer(newQuote);
 
   document.getElementById('newQuoteText').value = '';
@@ -65,7 +65,7 @@ function updateCategoryOptions() {
 function filterQuote() {
   selectedCategory = categoryFilter.value;
   localStorage.setItem('selectedCategory', selectedCategory);
-  displayRandomQuote();
+  showRandomQuote();
 }
 
 async function fetchQuotesFromServer() {
@@ -87,7 +87,7 @@ async function fetchQuotesFromServer() {
     quotes = combinedQuotes;
     saveQuotesToLocalStorage();
     updateCategoryOptions();
-    displayRandomQuote();
+    showRandomQuote();
     notify('Quotes synced with server!');
   } catch (err) {
     console.error('Fetch failed', err);
@@ -140,7 +140,7 @@ function importQuotes(e) {
     });
     saveQuotesToLocalStorage();
     updateCategoryOptions();
-    displayRandomQuote();
+    showRandomQuote();
     notify('Quotes imported!');
   };
   reader.readAsText(file);
@@ -149,12 +149,12 @@ function importQuotes(e) {
 // Initial Load
 loadQuotesFromLocalStorage();
 updateCategoryOptions();
-displayRandomQuote();
+showRandomQuote();
 syncQuotes();
 setInterval(syncQuotes, 10000); // sync every 10s
 
 // Event Listeners
-newQuoteBtn.addEventListener('click', displayRandomQuote);
+newQuoteBtn.addEventListener('click', showRandomQuote);
 addQuoteBtn.addEventListener('click', addQuote);
 categoryFilter.addEventListener('change', filterQuote);
 exportBtn.addEventListener('click', exportQuotes);
