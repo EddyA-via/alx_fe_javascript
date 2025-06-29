@@ -1,52 +1,137 @@
-// Array of quotes
-let quotes = [
+let quotes = JSON.parse(localStorage.getItem("quotes")) || [
   { text: "Stay hungry, stay foolish.", category: "Motivation" },
   { text: "Be yourself; everyone else is already taken.", category: "Life" },
   { text: "The only limit is your mind.", category: "Inspiration" }
 ];
 
-// Display a random quote
-function displayRandomQuote() {
-  const quoteDisplay = document.getElementById("quoteDisplay");
+let selectedCategory = localStorage.getItem("selectedCategory") || "all";
 
-  if (quotes.length === 0) {
+// DOM Elements
+const quoteDisplay = document.getElementById("quoteDisplay");
+const categoryFilter = document.getElementById("categoryFilter");
+
+// Display Random Quote Based on Filter
+function displayRandomQuote() {
+  let filtered = selectedCategory === "all"
+    ? quotes
+    : quotes.filter(q => q.category === selectedCategory);
+
+  if (filtered.length === 0) {
     quoteDisplay.textContent = "No quotes available.";
     return;
   }
 
-  const randomIndex = Math.floor(Math.random() * quotes.length);
-  const quote = quotes[randomIndex];
-
+  const quote = filtered[Math.floor(Math.random() * filtered.length)];
   quoteDisplay.textContent = `"${quote.text}" — (${quote.category})`;
 }
 
-// Add a new quote
+// Add New Quote
 function addQuote() {
-  const quoteInput = document.getElementById("newQuoteText");
-  const categoryInput = document.getElementById("newQuoteCategory");
+  const text = document.getElementById("newQuoteText").value.trim();
+  const category = document.getElementById("newQuoteCategory").value.trim();
 
-  const text = quoteInput.value.trim();
-  const category = categoryInput.value.trim();
-
-  if (!text || !category) {
-    alert("Please enter both a quote and a category.");
-    return;
-  }
+  if (!text || !category) return alert("Both fields are required.");
 
   const newQuote = { text, category };
   quotes.push(newQuote);
 
-  // Clear form inputs
-  quoteInput.value = "";
-  categoryInput.value = "";
-
-  // Display the new quote
+  saveQuotes();
+  populateCategories();
   displayRandomQuote();
+
+  document.getElementById("newQuoteText").value = "";
+  document.getElementById("newQuoteCategory").value = "";
 }
 
-// Set up event listeners
+// Save to localStorage
+function saveQuotes() {
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+}
+
+// Populate category dropdown
+function populateCategories() {
+  const categories = [...new Set(quotes.map(q => q.category))];
+  categoryFilter.innerHTML = `<option value="all">All</option>`;
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    if (cat === selectedCategory) option.selected = true;
+    categoryFilter.appendChild(option);
+  });
+}
+
+// Event listeners
 document.getElementById("showQuoteBtn").addEventListener("click", displayRandomQuote);
 document.getElementById("addQuoteBtn").addEventListener("click", addQuote);
 
-// Show one quote on page load
+categoryFilter.addEventListener("change", () => {
+  selectedCategory = categoryFilter.value;
+  localStorage.setItem("selectedCategory", selectedCategory);
+  displayRandomQuote();
+});
+
+// Export Quotes
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "quotes.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Import Quotes
+document.getElementById("importInput").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const importedQuotes = JSON.parse(reader.result);
+      if (Array.isArray(importedQuotes)) {
+        quotes = importedQuotes;
+        saveQuotes();
+        populateCategories();
+        displayRandomQuote();
+        alert("Quotes imported successfully!");
+      }
+    } catch {
+      alert("Invalid JSON format.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Simulate Server Sync
+function fetchQuotesFromServer() {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve([
+        { text: "Success is not final; failure is not fatal.", category: "Motivation" },
+        { text: "Believe you can and you're halfway there.", category: "Inspiration" }
+      ]);
+    }, 1500);
+  });
+}
+
+async function syncQuotes() {
+  const serverQuotes = await fetchQuotesFromServer();
+  const existing = new Set(quotes.map(q => q.text + q.category));
+
+  const newOnes = serverQuotes.filter(q => !existing.has(q.text + q.category));
+
+  if (newOnes.length > 0) {
+    quotes = quotes.concat(newOnes);
+    saveQuotes();
+    populateCategories();
+    alert("New quotes synced from server!");
+  }
+}
+
+// Initial setup
+populateCategories();
 displayRandomQuote();
+syncQuotes();
