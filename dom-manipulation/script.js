@@ -79,6 +79,18 @@ function notifyUser(msg, isError = false) {
 
 // ----------------- Mock API Interaction -----------------
 
+// ✅ Fetch quotes from mock API using a dedicated function
+async function fetchQuotesFromServer() {
+  const response = await fetch("https://jsonplaceholder.typicode.com/posts");
+  const data = await response.json();
+
+  // Simulate server-side quotes
+  return data.slice(0, 3).map(post => ({
+    text: post.title,
+    category: "Server"
+  }));
+}
+
 // ✅ Post quote to mock API using fetch
 function postQuoteToServer(quote) {
   fetch("https://jsonplaceholder.typicode.com/posts", {
@@ -94,22 +106,15 @@ function postQuoteToServer(quote) {
     .catch(() => notifyUser("Error syncing to mock API.", true));
 }
 
-// ✅ Sync function that "pretends" to pull new data
+// ✅ Sync function that uses fetchQuotesFromServer
 async function syncQuotes() {
   try {
-    const res = await fetch("https://jsonplaceholder.typicode.com/posts");
-    const serverData = await res.json();
-
-    // Simulated: Convert server data to quote format
-    const incomingQuotes = serverData.slice(0, 3).map(post => ({
-      text: post.title,
-      category: "Server",
-    }));
+    const serverQuotes = await fetchQuotesFromServer();
 
     let addedCount = 0;
     const localKeys = new Set(quotes.map(q => q.text + q.category));
 
-    for (const q of incomingQuotes) {
+    for (const q of serverQuotes) {
       const key = q.text + q.category;
       if (!localKeys.has(key)) {
         quotes.push(q);
@@ -126,12 +131,12 @@ async function syncQuotes() {
       notifyUser("No new quotes found on server.");
     }
   } catch (error) {
-    console.error(error);
+    console.error("Sync error:", error);
     notifyUser("Failed to sync from server.", true);
   }
 }
 
-// ----------------- Import / Export (Optional) -----------------
+// ----------------- Import / Export -----------------
 
 document.getElementById("exportBtn").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
